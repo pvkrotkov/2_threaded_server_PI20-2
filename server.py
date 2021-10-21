@@ -2,7 +2,7 @@ import socket
 from threading import Thread
 
 sock = socket.socket()
-sock.bind(('', 52421))
+sock.bind(('', 52420))
 sock.listen(0)
 
 users = []
