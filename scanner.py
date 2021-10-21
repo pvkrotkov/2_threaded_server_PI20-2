@@ -3,7 +3,7 @@ import socket
 from tqdm import tqdm
 N = 2**16 - 1
 
-adr = 'localhost'
+adr = '62.117.90.2'
 free_port = []
 start = 0
 finish = 65535
@@ -17,6 +17,8 @@ pbar = tqdm(total=100)
 def port_connect(adr, port):
     conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
     if conn.connect_ex((adr, port)):
+        print(port)
+        print()
         return port
     else:
         return False
@@ -39,6 +41,7 @@ threads = [threading.Thread(target=port_thread) for i in range(Numbers_Of_Thread
 
 [i.start() for i in threads]
 [i.join() for i in threads]
+
 print("\n")
 lenght = len(free_port)
 print(f"Список открытых портов (всего {lenght}):")
