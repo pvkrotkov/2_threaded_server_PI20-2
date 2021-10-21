@@ -1,15 +1,47 @@
 import socket
-from threading import Thread
+import threading
 
-N = 2**16 - 1
+m = 2 ** 16 - 1
+counter = 0
+spaces = " " * 100 + "\n"
 
-for port in range(1,100):
-    sock = socket.socket()
-    try:
-        print(port)
-        sock.connect(('127.0.0.1', port))
-        print("Порт", i, "открыт")
-    except:
-        continue
-    finally:
-        sock.close()
+
+def printProgressBar(iteration, total, prefix='', suffix='', decimals=1, length=100, fill='█', printEnd="\r"):
+    percent = ("{0:." + str(decimals) + "f}").format(100 * (iteration / float(total)))
+    filledLength = int(length * iteration // total)
+    bar = fill * filledLength + '-' * (length - filledLength)
+    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix), end=printEnd)
+    if iteration == total:
+        print()
+
+
+def scan(arr, thr, host):
+    global counter
+    for port in arr:
+        sock = socket.socket()
+        try:
+            sock.connect((host, port))
+            print("Порт", port, "открыт", end=spaces)
+            printProgressBar(counter, 66, prefix='Прогресс:', suffix='Выполнено', length=50)
+        except:
+            continue
+        finally:
+            sock.close()
+    counter += 1
+    return
+
+
+host = input("Хост:")
+if host == '':
+    host = '127.0.0.1'
+
+printProgressBar(0, 66, prefix='Прогресс:', suffix='Выполнено', length=50)
+
+for thread in range(66):
+    arr = []
+    for i in range(1000):
+        arr.append(thread * 1000 + i)
+        if arr[i] >= m:
+            break
+    thr = threading.Thread(target=scan, args=[arr, thread, host])
+    thr.start()
