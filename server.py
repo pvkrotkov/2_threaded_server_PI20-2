@@ -1,20 +1,22 @@
 import socket
 
 sock = socket.socket()
-sock.bind(('', 9090))
-sock.listen(0)
-conn, addr = sock.accept()
-print(addr)
+try:
+    num_port = int(input("Введите номер порта: "))
+    assert 1024 < num_port < 65535, "Введенный порт рекомендуется не использовать или он занят."
+except (AssertionError, TypeError, ValueError) as e:
+    print("Будет введен порт по умолчанию 9091")
+    num_port = 9092
 
+sock.connect(('localhost', num_port))
+print("Успешно")
 msg = ''
 
-while True:
-	data = conn.recv(1024)
-	if not data:
-		break
-	msg += data.decode()
-	conn.send(data)
+while msg != 'exit':
+    msg = input()
+    sock.send(msg.encode())
+    inf = sock.recv(1024)
+    print(inf.decode())
 
-print(msg)
 
-conn.close()
+sock.close()
