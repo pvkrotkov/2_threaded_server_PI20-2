@@ -1,16 +1,23 @@
 import socket
-from time import sleep
+
 
 sock = socket.socket()
-sock.setblocking(1)
-sock.connect(('10.38.165.12', 9090))
+try:
+    num_port = int(input("Введите номер порта: "))
+    assert 1024 < num_port < 65535, "Введенный порт рекомендуется не использовать или он занят."
+except (AssertionError, TypeError, ValueError) as e:
+    print("Будет введен порт по умолчанию 9091")
+    num_port = 9092
 
-#msg = input()
-msg = "Hi!"
-sock.send(msg.encode())
+sock.connect(('localhost', num_port))
+print("Успешно")
+msg = ''
 
-data = sock.recv(1024)
+while msg != 'exit':
+    msg = input()
+    sock.send(msg.encode())
+    inf = sock.recv(1024)
+    print(inf.decode())
+
 
 sock.close()
-
-print(data.decode())
