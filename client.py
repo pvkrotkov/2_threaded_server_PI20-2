@@ -1,7 +1,6 @@
 import socket
 
 sock = socket.socket()
-sock.setblocking(1)
 host = input('Введите имя хоста: ')
 
 if host == 'localhost':
