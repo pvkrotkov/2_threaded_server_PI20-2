@@ -1,15 +1,32 @@
 import socket
-from threading import Thread
+import concurrent.futures
+import tqdm
 
-N = 2**16 - 1
+def scan_port(host, port, progress_bar, ports):
+    	sock = socket.socket()
+    	sock.settimeout(0.5)
+    	try:
+        	sock.connect((host, port))
+        	ports.append(port)
+    	except:
+        	pass 
+    	progress_bar.update()
 
-for port in range(1,100):
-    sock = socket.socket()
-    try:
-        print(port)
-        sock.connect(('127.0.0.1', port))
-        print("Порт", i, "открыт")
-    except:
-        continue
-    finally:
-        sock.close()
+host = input('Введите хост: ')
+start_port = int(input('Введите минимальный порт: '))
+end_port = int(input('Введите максимальный порт: '))
+thread = int(input('Сколько потоков использовать для сканирования одновременно: '))
+
+ports = []
+progress_bar = tqdm.tqdm(total=end_port-start_port+1)
+
+with concurrent.futures.ThreadPoolExecutor(thread) as executor:
+	futures = []
+    	for port in range(start_port, end_port+1):
+        	future = executor.submit(scan_port, host, port, progress_bar, ports)
+        	futures.append(future)
+    	for future in futures:
+        	future.result()
+progress_bar.close()
+for port in ports:
+    	print(f'Порт {port} открыт!')
