@@ -1,41 +1,39 @@
-import socket, threading
-CLIENT = 0  # количество всех клиентов, имеющих возможность одновременно подключаться
-lock = threading.Lock()  # создает замок для всех потоков
-
-def connect(conn: socket.socket, addr: tuple) -> None:
-
-    print(addr[0])
-    while True:
-        data = conn.recv(1024)
-        ans = data.decode()
-        print(ans)
-        if not data:
-            break
-
-        conn.send(ans.upper().encode())
-    conn.close()
+import socket
+from threading import Thread
 
 sock = socket.socket()
+sock.bind(('', 52429))
+sock.listen(0)
 
-try:
-    num_port = int(input("Введите номер порта "))
-    assert 1024 < num_port < 65535, "Ваше значение не удовлетворяет условию ввода. "
+users = []
 
-except (AssertionError, TypeError, ValueError) as e:
-    num_port = 9092
+def func():
+	conn, addr = sock.accept()
+	print(addr)
+	users.append(addr)
 
-print("Точка подключения: ", num_port)
+	msg = ''
 
-sock.bind(("", num_port))
-print('Успешно')
+	while True:
+		data = conn.recv(1024)
+		if not data:
+			break
+		msg = data.decode()
+		for i in users:
+			conn.sendto(data, (i))
 
-CLIENT = int(input("Введите количество прослушиваемых одновременно портов "))
+		print(msg)
 
-sock.listen(CLIENT)
+	conn.close()
+
+def main():
+	a1 = Thread(target=func)
+	a2 = Thread(target=func)
+	a3 = Thread(target=func)
+	a1.start()
+	a2.start()
+	a3.start()
+
 
 if __name__ == "__main__":
-
-    while True:
-        conn, addr = sock.accept()
-        thread = threading.Thread(target=connect, args=[conn, addr])
-        thread.start()
+	main()
