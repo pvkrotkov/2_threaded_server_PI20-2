@@ -1,58 +1,77 @@
 import socket
-from threading import Thread
-import time
-from progress.bar import IncrementalBar
+import threading
+import queue
+import sys
+import shutil
+from time import sleep
 
-N = 2**16 - 1
+columns = shutil.get_terminal_size().columns
+checked = 0
+lock = threading.RLock()
 
-ports = []
 
-def port_scanner(port_start, port_finish):
-    #print(port_start, " ", port_finish)
-    #addr = str(input("Введите IP-адресс пользователя: "))
-    addr = "localhost"
-    for port in range(port_start, port_finish + 1):
-        sock = socket.socket()
+def progress_bar() -> None:
+    global checked
+    while checked < 65535:
+        pr = (checked + 1) / 65535
+        # возврат каретки с вывоводом прогресс-бара
+        sys.stdout.write('\r' + "*" * int(pr * 10) + f" {pr * 100:.0f}%")
+        sys.stdout.flush()
+        sleep(0.0001)
+    print()
+
+
+def scanner(host: str, num: int, que: queue.Queue) -> None:
+    global checked
+
+    g = num
+    while (num != g + 555) and num < 65536:
         try:
-            print(port)
-            sock.connect((addr, port))
-            ports.append(port)
-            #print(port, "Добавлен")
-            #print("Порт", port, "открыт")
-        except:
-            continue
+
+            scan = socket.socket()
+            scan.connect((host, num))
+            que.put(num)
+
+        except OSError:
+            pass
+
         finally:
-            sock.close()
+            num += 1
+            scan.close()
+            try:
+                lock.acquire()
+                checked += 1
 
-def main():
-    bar = IncrementalBar('Countdown', max = N)
+            finally:
+                lock.release()
 
-    t1 = Thread(target=port_scanner, args=[0, 13107])
-    t2 = Thread(target=port_scanner, args=[13108, 26214])
-    t3 = Thread(target=port_scanner, args=[26215, 39321])
-    t4 = Thread(target=port_scanner, args=[39322, 52428])
-    t5 = Thread(target=port_scanner, args=[52429, 65535])
-
-    t1.start()
-    t2.start()
-    t3.start()
-    t4.start()
-    t5.start()
-
-    for i in range(N):
-        bar.next(n=5)
-        time.sleep(1)
-
-    bar.finish()
-
-    t1.join()
-    t2.join()
-    t3.join()
-    t4.join()
-    t5.join()
-
-    ports.sort()
-    print(ports)
 
 if __name__ == "__main__":
-    main()
+
+    port = 562 # количество обрабатываемых каждым потоком портов
+    NUM = 120
+    num_port = 1
+    threads = []
+
+
+    scan = socket.socket()
+
+    host_name = input("введите имя хоста ") or 'localhost'
+    que = queue.Queue()  # открытые порты
+    bar = threading.Thread(target=progress_bar)
+    bar.start()
+    for i in range(NUM):
+        new_thread = threading.Thread(target=scanner, args=[host_name, port, que])
+        threads.append(new_thread)
+        new_thread.start()
+        port += 546  # каждый следующий поток рассматривает на 546 больше
+
+    for thread in threads:
+        thread.join()
+    bar.join()
+
+    ports = []
+    while not que.empty():
+        ports.append(que.get())
+    print("Свободные порты: ", end='')
+    print(*sorted(ports), sep='; ')
