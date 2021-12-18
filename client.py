@@ -1,16 +1,36 @@
 import socket
-from time import sleep
+import threading
+import sys
 
+host = "localhost"
+port = 5000
 sock = socket.socket()
-sock.setblocking(1)
-sock.connect(('10.38.165.12', 9090))
+sock.connect((host, port))
 
-#msg = input()
-msg = "Hi!"
-sock.send(msg.encode())
+def Reciver():
+    while 1:
+        data = sock.recv(1024)
+        if data:
+            print(data.decode())
 
-data = sock.recv(1024)
+def Sender():
+    while 1:
+        message = input()
+        if message == "exit":
+            sock.close()
+            sys.exit()
+        else:
+            sock.send(message.encode())
 
-sock.close()
+# init threads
+t1 = threading.Thread(target=Reciver)
+t2 = threading.Thread(target=Sender)
 
-print(data.decode())
+# start threads
+t1.start()
+t2.start()
+
+
+
+
+
